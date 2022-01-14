@@ -1,0 +1,5 @@
+.stack-work/
+morse-tool.cabal
+*~
+c-test/main
+c-test/morseout*

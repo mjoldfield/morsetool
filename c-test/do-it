@@ -1,0 +1,18 @@
+#! /bin/bash
+
+set -e
+set -x
+
+rm -f *.wav morseout.c morseout.h
+
+stack build
+
+stack exec morse-tool
+
+gcc -Wall -pedantic -std=c99 main.c morseout.c tinywav.c -o main
+
+./main
+
+ls -l  *.wav
+
+

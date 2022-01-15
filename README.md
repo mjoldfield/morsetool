@@ -1,8 +1,22 @@
 # morse-tool
 
-Code to transform text into Morse Code, encoded both in
-the traditional dot-and-dash representation and as the
-times for a series of marks and spaces.
+Code to transform text into Morse Code represented as a list
+of times for alternating beep and silence. The quantum of time
+is the length of a dit, so A which is .- in Morse, is encoded
+as:
+
+  - 1 : the dit;
+  - 1 : a dit-length space between letters;
+  - 3 : the dah.
+
+You can see that a dah is three dits long. Wikipedia has a good
+section on [timings and
+speeds](https://en.wikipedia.org/wiki/Morse_code#Representation,_timing,_and_speeds)
+if you want to know more.
+
+The tool might be useful if you want to broadcast text in Morse Code
+particularly if the device doing the broadcasting doesn’t have many
+resources.
 
 Key files:
 
@@ -14,7 +28,7 @@ Key files:
 
   * src/ToC.hs        <- Rendering to C arrays.
 
-There's also a small C test example in c-test. The do-it
+There’s also a small C test example in c-test. The do-it
 script builds the tool, generates C arrays, compiles them,
 and finally generates WAV files for each message.
 
@@ -95,3 +109,63 @@ As you can see it is very simple:
  - messages are separated by a blank line;
 
  - any line starting with # is taken as a comment.
+
+## The C API
+
+### const uint32_t n_morse_messages
+
+This is the number of messages available.
+
+### uint32_t morse_get_next_time(uint32_t n_msg, uint32_t * const msg_i)
+
+This function is called repeatedly returning a new time interval every
+time. On the first call, `*msg_i` should be set to 0. The function
+will increment `*msg_i` internally until the end of the message
+whereupon it is set to 0. Thus repeated calls will loop over the
+message, though a padding space will probably be required.
+
+It is worth noting the `*msg_i` should either be set to zero or
+compared to zero by user code. No other operations are supported.
+
+### An example
+
+The morse.cfg file above contains two messages, so
+
+	n_morse_messages = 2
+
+To read the timing data, code like this could be used:
+
+	uint32_t i = 0;
+	bool ms = true;
+	do
+	  {
+		const uint32_t dt = morse_get_next_time(0, &i);
+		printf("%-7s %d\n", (ms ? "beep" : "silence"), dt);
+
+		ms = !ms;
+	  }
+	while (i != 0);
+
+The first message begins `H` then `e` then `l` which in Morse is
+represented as `.... . .-..`. Running the code above gives:
+
+	beep    1
+	silence 1
+	beep    1
+	silence 1
+	beep    1
+	silence 1
+	beep    1
+	silence 3
+	beep    1
+	silence 3
+	beep    1
+	silence 1
+	beep    3
+	silence 1
+	beep    1
+	silence 1
+	beep    1
+	silence 3
+
+To generate audio,

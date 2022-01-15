@@ -167,5 +167,3 @@ represented as `.... . .-..`. Running the code above gives:
 	silence 1
 	beep    1
 	silence 3
-
-To generate audio,
